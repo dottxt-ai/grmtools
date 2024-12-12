@@ -59,7 +59,7 @@ pub struct Rule<StorageT> {
     /// create a lexeme).
     pub name: Option<String>,
     pub name_span: Span,
-    pub(super) re_str: String,
+    pub re_str: String,
     re: Regex,
     /// Id(s) of permitted start conditions for the lexer to match this rule.
     pub start_states: Vec<usize>,
