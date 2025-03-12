@@ -982,9 +982,44 @@ C : 'a';
         assert_eq!(
             conflicts.rr_conflicts().next().unwrap(),
             &(
+                TIdx(1),
                 grm.rule_to_prods(grm.rule_idx("B").unwrap())[0],
                 grm.rule_to_prods(grm.rule_idx("C").unwrap())[0],
                 StIdx(2)
+            )
+        );
+    }
+
+    #[test]
+    fn reduce_reduce_conflict() {
+        let grm = YaccGrammar::new(
+            YaccKindResolver::Force(YaccKind::Original(YaccOriginalActionKind::GenericParseTree)),
+            "
+%start S
+%%
+S: A X | B X | A Y;
+A: '0' ; B: '0' ; C: '0' ;
+X: '1' ; Y: '2' ;
+          ",
+        )
+        .unwrap();
+        let sg = pager_stategraph(&grm);
+        let st = StateTable::new(&grm, &sg).unwrap();
+        let conflicts = st.conflicts().unwrap();
+        assert_eq!(conflicts.sr_len(), 0);
+
+        // There is only one reduce/reduce conflict because state 1 has the following item set:
+        // 1:  [B -> '0' ., {'1'}]
+        //     [A -> '0' ., {'1', '2'}]
+        // which causes a conflict only if the lookahead is '1' but not if the lookahead is '2'.
+        assert_eq!(conflicts.rr_len(), 1);
+        assert_eq!(
+            conflicts.rr_conflicts().next().unwrap(),
+            &(
+                TIdx(1),
+                grm.rule_to_prods(grm.rule_idx("A").unwrap())[0],
+                grm.rule_to_prods(grm.rule_idx("B").unwrap())[0],
+                StIdx(1)
             )
         );
     }
